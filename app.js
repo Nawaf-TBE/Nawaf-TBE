@@ -10,7 +10,15 @@ const demoItems = [
 export async function fetchItems() {
   // simulate network delay
   return new Promise((resolve) => {
-    setTimeout(() => resolve(demoItems), 300);
+    setTimeout(
+      () =>
+        resolve(
+          demoItems.map((item) => ({
+            ...item,
+          }))
+        ),
+      300
+    );
   });
 }
 
