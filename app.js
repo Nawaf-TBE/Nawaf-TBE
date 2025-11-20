@@ -27,8 +27,10 @@ export function toggleItem(id) {
   const item = demoItems.find((entry) => entry.id === id);
   if (item) {
     item.completed = !item.completed;
+    return { item, error: null };
   }
-  return item;
+  console.warn(`toggleItem: no item found for id ${id}`);
+  return { item: null, error: `No item found for id ${id}` };
 }
 
 // Helper to log current state (useful for debugging)
