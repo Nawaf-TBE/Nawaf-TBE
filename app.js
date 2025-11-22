@@ -1,10 +1,36 @@
 // Basic application logic for User Interface demo
 
-// Mock data that UI could render
-const demoItems = [
+// Mock data that UI could render (in-memory state)
+let demoItems = [
   { id: 1, label: "First task", completed: false },
   { id: 2, label: "Second task", completed: true },
 ];
+
+// Local persistence helpers (no-op if localStorage is unavailable)
+function loadFromStorage() {
+  try {
+    const raw = window?.localStorage?.getItem("demoItems");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveToStorage(items) {
+  try {
+    window?.localStorage?.setItem("demoItems", JSON.stringify(items));
+  } catch {
+    // ignore storage errors; app will continue in-memory only
+  }
+}
+
+const storedItems = loadFromStorage();
+if (storedItems) {
+  demoItems = storedItems;
+}
 
 // Function to fetch items (simulated async behavior)
 export async function fetchItems() {
@@ -13,9 +39,7 @@ export async function fetchItems() {
     setTimeout(
       () =>
         resolve(
-          demoItems.map((item) => ({
-            ...item,
-          }))
+          demoItems.map((item) => ({ ...item }))
         ),
       300
     );
@@ -27,10 +51,39 @@ export function toggleItem(id) {
   const item = demoItems.find((entry) => entry.id === id);
   if (item) {
     item.completed = !item.completed;
+    saveToStorage(demoItems);
     return { item, error: null };
   }
   console.warn(`toggleItem: no item found for id ${id}`);
   return { item: null, error: `No item found for id ${id}` };
+}
+
+// Add a new item to the list
+export function addItem(label) {
+  if (!label || typeof label !== "string") {
+    return { item: null, error: "Label must be a non-empty string" };
+  }
+  const trimmedLabel = label.trim();
+  if (!trimmedLabel) {
+    return { item: null, error: "Label must not be blank" };
+  }
+  const nextId = demoItems.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
+  const newItem = { id: nextId, label: trimmedLabel, completed: false };
+  demoItems.push(newItem);
+  saveToStorage(demoItems);
+  return { item: newItem, error: null };
+}
+
+// Remove an item by id
+export function removeItem(id) {
+  const index = demoItems.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    console.warn(`removeItem: no item found for id ${id}`);
+    return { removed: false, error: `No item found for id ${id}` };
+  }
+  demoItems.splice(index, 1);
+  saveToStorage(demoItems);
+  return { removed: true, error: null };
 }
 
 // Helper to log current state (useful for debugging)
