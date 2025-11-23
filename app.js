@@ -1,30 +1,44 @@
 // Basic application logic for User Interface demo
 
+const STORAGE_KEY = "demoItems";
+
 // Mock data that UI could render (in-memory state)
 let demoItems = [
   { id: 1, label: "First task", completed: false },
   { id: 2, label: "Second task", completed: true },
 ];
 
-// Local persistence helpers (no-op if localStorage is unavailable)
+const canUseStorage =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+// Local persistence helpers (no-op if storage is unavailable)
 function loadFromStorage() {
+  if (!canUseStorage) return null;
   try {
-    const raw = window?.localStorage?.getItem("demoItems");
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return null;
-    return parsed;
+    return Array.isArray(parsed) ? parsed : null;
   } catch {
     return null;
   }
 }
 
 function saveToStorage(items) {
+  if (!canUseStorage) return;
   try {
-    window?.localStorage?.setItem("demoItems", JSON.stringify(items));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   } catch {
     // ignore storage errors; app will continue in-memory only
   }
+}
+
+function cloneItems(items = demoItems) {
+  return items.map((item) => ({ ...item }));
+}
+
+function persistState() {
+  saveToStorage(demoItems);
 }
 
 const storedItems = loadFromStorage();
@@ -36,13 +50,7 @@ if (storedItems) {
 export async function fetchItems() {
   // simulate network delay
   return new Promise((resolve) => {
-    setTimeout(
-      () =>
-        resolve(
-          demoItems.map((item) => ({ ...item }))
-        ),
-      300
-    );
+    setTimeout(() => resolve(cloneItems()), 300);
   });
 }
 
@@ -51,7 +59,7 @@ export function toggleItem(id) {
   const item = demoItems.find((entry) => entry.id === id);
   if (item) {
     item.completed = !item.completed;
-    saveToStorage(demoItems);
+    persistState();
     return { item, error: null };
   }
   console.warn(`toggleItem: no item found for id ${id}`);
@@ -70,7 +78,7 @@ export function addItem(label) {
   const nextId = demoItems.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
   const newItem = { id: nextId, label: trimmedLabel, completed: false };
   demoItems.push(newItem);
-  saveToStorage(demoItems);
+  persistState();
   return { item: newItem, error: null };
 }
 
@@ -82,7 +90,7 @@ export function removeItem(id) {
     return { removed: false, error: `No item found for id ${id}` };
   }
   demoItems.splice(index, 1);
-  saveToStorage(demoItems);
+  persistState();
   return { removed: true, error: null };
 }
 
