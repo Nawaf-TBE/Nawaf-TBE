@@ -43,27 +43,96 @@ p {
 
 button {
   padding: 0.6rem 1.1rem;
-  border: 1px solid #2b6cb0;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #ffffff;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #1f2933;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  box-shadow: 0 8px 20px rgba(31, 47, 70, 0.08);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease, border-color 120ms ease;
 }
 
 button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.3);
+  border-color: #cbd5e0;
+  box-shadow: 0 10px 24px rgba(31, 47, 70, 0.12);
 }
 
 button:active {
   transform: translateY(0);
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 6px 14px rgba(31, 47, 70, 0.1);
 }
 
 button:focus-visible {
   outline: 2px solid #1d4ed8;
   outline-offset: 2px;
+}
+
+form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+input[type="text"] {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #d7dde5;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+input[type="text"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: #ffffff;
+  outline: none;
+}
+
+#status {
+  min-height: 1.5rem;
+  font-size: 0.95rem;
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+#status.status.error {
+  color: #b91c1c;
+}
+
+ul#task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+ul#task-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fdfefe;
+}
+
+ul#task-list li .actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+ul#task-list li .completed {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+ul#task-list li.empty {
+  justify-content: center;
+  color: #6b7280;
 }

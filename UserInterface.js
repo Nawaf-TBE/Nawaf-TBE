@@ -1,18 +1,126 @@
-// Basic User Interface setup
+// Basic User Interface wired to the data layer
+import { fetchItems, addItem, toggleItem, removeItem } from "./app.js";
 
-// Function to initialize the UI
-function initializeUI() {
-    console.log("Initializing User Interface...");
-    // Example: Create a basic button
-    const button = document.createElement("button");
-    button.textContent = "Click Me";
-    button.addEventListener("click", () => {
-        alert("Button clicked!");
-    });
+function createLayout() {
+  const main = document.querySelector("main");
+  const form = document.createElement("form");
+  form.id = "task-form";
 
-    // Append the button to the body
-    document.body.appendChild(button);
+  const input = document.createElement("input");
+  input.type = "text";
+  input.name = "label";
+  input.placeholder = "Add a new task";
+  input.required = true;
+  input.autocomplete = "off";
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "Add Task";
+
+  const status = document.createElement("div");
+  status.id = "status";
+  status.setAttribute("aria-live", "polite");
+
+  const list = document.createElement("ul");
+  list.id = "task-list";
+  list.setAttribute("aria-live", "polite");
+
+  form.append(input, submit);
+  main.append(form, status, list);
+
+  return { form, input, status, list };
 }
 
-// Call the initializeUI function when the DOM is fully loaded
+function renderItems(listEl, items, onToggle, onRemove) {
+  listEl.innerHTML = "";
+
+  if (!items.length) {
+    const empty = document.createElement("li");
+    empty.textContent = "No tasks yet. Add one above!";
+    empty.className = "empty";
+    listEl.appendChild(empty);
+    return;
+  }
+
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.dataset.id = String(item.id);
+
+    const label = document.createElement("span");
+    label.textContent = item.label;
+    label.className = item.completed ? "completed" : "";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.textContent = item.completed ? "Mark Incomplete" : "Mark Done";
+    toggleBtn.addEventListener("click", () => onToggle(item.id));
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => onRemove(item.id));
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.append(toggleBtn, removeBtn);
+
+    li.append(label, actions);
+    listEl.appendChild(li);
+  });
+}
+
+function setStatus(statusEl, message, type = "info") {
+  statusEl.textContent = message || "";
+  statusEl.className = message ? `status ${type}` : "status";
+}
+
+async function initializeUI() {
+  const { form, input, status, list } = createLayout();
+
+  async function refresh() {
+    setStatus(status, "Loading tasks…");
+    try {
+      const items = await fetchItems();
+      renderItems(list, items, handleToggle, handleRemove);
+      setStatus(status, "");
+    } catch (err) {
+      setStatus(status, "Failed to load tasks.", "error");
+      console.error(err);
+    }
+  }
+
+  function handleToggle(id) {
+    const { error } = toggleItem(id);
+    if (error) {
+      setStatus(status, error, "error");
+      return;
+    }
+    refresh();
+  }
+
+  function handleRemove(id) {
+    const { error } = removeItem(id);
+    if (error) {
+      setStatus(status, error, "error");
+      return;
+    }
+    refresh();
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const label = input.value;
+    const { error } = addItem(label);
+    if (error) {
+      setStatus(status, error, "error");
+      return;
+    }
+    input.value = "";
+    setStatus(status, "Task added.");
+    refresh();
+  });
+
+  refresh();
+}
+
 document.addEventListener("DOMContentLoaded", initializeUI);
