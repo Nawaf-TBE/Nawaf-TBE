@@ -84,8 +84,8 @@ async function initializeUI() {
       renderItems(list, items, handleToggle, handleRemove);
       setStatus(status, "");
     } catch (err) {
-      setStatus(status, "Failed to load tasks.", "error");
-      console.error(err);
+      const message = err?.message || "Failed to load tasks.";
+      setStatus(status, message, "error");
     }
   }
 
@@ -95,6 +95,7 @@ async function initializeUI() {
       setStatus(status, error, "error");
       return;
     }
+    setStatus(status, "Task updated.");
     refresh();
   }
 
@@ -104,6 +105,7 @@ async function initializeUI() {
       setStatus(status, error, "error");
       return;
     }
+    setStatus(status, "Task removed.");
     refresh();
   }
 
