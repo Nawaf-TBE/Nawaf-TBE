@@ -111,12 +111,21 @@ async function initializeUI() {
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const label = input.value;
+    const label = input.value.trim();
+    if (!label) {
+      input.classList.add("invalid");
+      setStatus(status, "Please enter a task name.", "error");
+      input.focus();
+      return;
+    }
+    input.classList.remove("invalid");
     const { error } = addItem(label);
     if (error) {
+      input.classList.add("invalid");
       setStatus(status, error, "error");
       return;
     }
+    input.classList.remove("invalid");
     input.value = "";
     setStatus(status, "Task added.");
     refresh();

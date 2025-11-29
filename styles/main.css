@@ -92,6 +92,12 @@ input[type="text"]:focus {
   outline: none;
 }
 
+input.invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+  background: #fff6f6;
+}
+
 #status {
   min-height: 1.5rem;
   font-size: 0.95rem;
