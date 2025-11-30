@@ -31,42 +31,52 @@ function createLayout() {
   return { form, input, status, list };
 }
 
-function renderItems(listEl, items, onToggle, onRemove) {
-  listEl.innerHTML = "";
+function createEmptyState() {
+  const empty = document.createElement("li");
+  empty.textContent = "No tasks yet. Add one above!";
+  empty.className = "empty";
+  return empty;
+}
+
+function createListItem(item, { onToggle, onRemove }) {
+  const li = document.createElement("li");
+  li.dataset.id = String(item.id);
+
+  const label = document.createElement("span");
+  label.textContent = item.label;
+  label.className = item.completed ? "completed" : "";
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.textContent = item.completed ? "Mark Incomplete" : "Mark Done";
+  toggleBtn.addEventListener("click", () => onToggle(item.id));
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.textContent = "Remove";
+  removeBtn.addEventListener("click", () => onRemove(item.id));
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  actions.append(toggleBtn, removeBtn);
+
+  li.append(label, actions);
+  return li;
+}
+
+function renderItems(listEl, items, handlers) {
+  const fragment = document.createDocumentFragment();
 
   if (!items.length) {
-    const empty = document.createElement("li");
-    empty.textContent = "No tasks yet. Add one above!";
-    empty.className = "empty";
-    listEl.appendChild(empty);
+    listEl.replaceChildren(createEmptyState());
     return;
   }
 
   items.forEach((item) => {
-    const li = document.createElement("li");
-    li.dataset.id = String(item.id);
-
-    const label = document.createElement("span");
-    label.textContent = item.label;
-    label.className = item.completed ? "completed" : "";
-
-    const toggleBtn = document.createElement("button");
-    toggleBtn.type = "button";
-    toggleBtn.textContent = item.completed ? "Mark Incomplete" : "Mark Done";
-    toggleBtn.addEventListener("click", () => onToggle(item.id));
-
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.textContent = "Remove";
-    removeBtn.addEventListener("click", () => onRemove(item.id));
-
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    actions.append(toggleBtn, removeBtn);
-
-    li.append(label, actions);
-    listEl.appendChild(li);
+    fragment.appendChild(createListItem(item, handlers));
   });
+
+  listEl.replaceChildren(fragment);
 }
 
 function setStatus(statusEl, message, type = "info") {
@@ -77,11 +87,25 @@ function setStatus(statusEl, message, type = "info") {
 async function initializeUI() {
   const { form, input, status, list } = createLayout();
 
+  function runItemAction(action, successMessage) {
+    const { error } = action();
+    if (error) {
+      setStatus(status, error, "error");
+      return false;
+    }
+    setStatus(status, successMessage);
+    refresh();
+    return true;
+  }
+
   async function refresh() {
     setStatus(status, "Loading tasks…");
     try {
       const items = await fetchItems();
-      renderItems(list, items, handleToggle, handleRemove);
+      renderItems(list, items, {
+        onToggle: handleToggle,
+        onRemove: handleRemove,
+      });
       setStatus(status, "");
     } catch (err) {
       const message = err?.message || "Failed to load tasks.";
@@ -90,23 +114,11 @@ async function initializeUI() {
   }
 
   function handleToggle(id) {
-    const { error } = toggleItem(id);
-    if (error) {
-      setStatus(status, error, "error");
-      return;
-    }
-    setStatus(status, "Task updated.");
-    refresh();
+    runItemAction(() => toggleItem(id), "Task updated.");
   }
 
   function handleRemove(id) {
-    const { error } = removeItem(id);
-    if (error) {
-      setStatus(status, error, "error");
-      return;
-    }
-    setStatus(status, "Task removed.");
-    refresh();
+    runItemAction(() => removeItem(id), "Task removed.");
   }
 
   form.addEventListener("submit", (event) => {
@@ -119,16 +131,14 @@ async function initializeUI() {
       return;
     }
     input.classList.remove("invalid");
-    const { error } = addItem(label);
-    if (error) {
+
+    const added = runItemAction(() => addItem(label), "Task added.");
+    if (!added) {
       input.classList.add("invalid");
-      setStatus(status, error, "error");
       return;
     }
     input.classList.remove("invalid");
     input.value = "";
-    setStatus(status, "Task added.");
-    refresh();
   });
 
   refresh();
