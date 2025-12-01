@@ -21,14 +21,18 @@ function createLayout() {
   status.id = "status";
   status.setAttribute("aria-live", "polite");
 
+  const counts = document.createElement("div");
+  counts.id = "counts";
+  counts.setAttribute("aria-live", "polite");
+
   const list = document.createElement("ul");
   list.id = "task-list";
   list.setAttribute("aria-live", "polite");
 
   form.append(input, submit);
-  main.append(form, status, list);
+  main.append(form, status, counts, list);
 
-  return { form, input, status, list };
+  return { form, input, status, counts, list };
 }
 
 function createEmptyState() {
@@ -79,13 +83,21 @@ function renderItems(listEl, items, handlers) {
   listEl.replaceChildren(fragment);
 }
 
+function renderCounts(countsEl, items) {
+  const total = items.length;
+  const completed = items.filter((item) => item.completed).length;
+  countsEl.textContent = total
+    ? `${completed} of ${total} completed`
+    : "No tasks yet";
+}
+
 function setStatus(statusEl, message, type = "info") {
   statusEl.textContent = message || "";
   statusEl.className = message ? `status ${type}` : "status";
 }
 
 async function initializeUI() {
-  const { form, input, status, list } = createLayout();
+  const { form, input, status, counts, list } = createLayout();
 
   function runItemAction(action, successMessage) {
     const { error } = action();
@@ -106,6 +118,7 @@ async function initializeUI() {
         onToggle: handleToggle,
         onRemove: handleRemove,
       });
+      renderCounts(counts, items);
       setStatus(status, "");
     } catch (err) {
       const message = err?.message || "Failed to load tasks.";

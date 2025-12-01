@@ -109,6 +109,13 @@ input.invalid {
   color: #b91c1c;
 }
 
+#counts {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2933;
+  margin-bottom: 1rem;
+}
+
 ul#task-list {
   list-style: none;
   padding: 0;
