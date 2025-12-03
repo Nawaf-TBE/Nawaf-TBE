@@ -99,7 +99,28 @@ function setStatus(statusEl, message, type = "info") {
 async function initializeUI() {
   const { form, input, status, counts, list } = createLayout();
 
-  function runItemAction(action, successMessage) {
+  const render = (items) => {
+    renderItems(list, items, {
+      onToggle: handleToggle,
+      onRemove: handleRemove,
+    });
+    renderCounts(counts, items);
+  };
+
+  const refresh = async () => {
+    setStatus(status, "Loading tasks…");
+    try {
+      const items = await fetchItems();
+      render(items);
+      setStatus(status, "");
+      return items;
+    } catch (err) {
+      setStatus(status, err?.message || "Failed to load tasks.", "error");
+      return [];
+    }
+  };
+
+  const runItemAction = (action, successMessage) => {
     const { error } = action();
     if (error) {
       setStatus(status, error, "error");
@@ -108,31 +129,15 @@ async function initializeUI() {
     setStatus(status, successMessage);
     refresh();
     return true;
-  }
+  };
 
-  async function refresh() {
-    setStatus(status, "Loading tasks…");
-    try {
-      const items = await fetchItems();
-      renderItems(list, items, {
-        onToggle: handleToggle,
-        onRemove: handleRemove,
-      });
-      renderCounts(counts, items);
-      setStatus(status, "");
-    } catch (err) {
-      const message = err?.message || "Failed to load tasks.";
-      setStatus(status, message, "error");
-    }
-  }
-
-  function handleToggle(id) {
+  const handleToggle = (id) => {
     runItemAction(() => toggleItem(id), "Task updated.");
-  }
+  };
 
-  function handleRemove(id) {
+  const handleRemove = (id) => {
     runItemAction(() => removeItem(id), "Task removed.");
-  }
+  };
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
