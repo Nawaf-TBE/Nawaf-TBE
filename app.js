@@ -2,10 +2,12 @@
 
 const STORAGE_KEY = "demoItems";
 
+const now = () => Date.now();
+
 // Mock data that UI could render (in-memory state)
 let demoItems = [
-  { id: 1, label: "First task", completed: false },
-  { id: 2, label: "Second task", completed: true },
+  { id: 1, label: "First task", completed: false, createdAt: now(), updatedAt: now() },
+  { id: 2, label: "Second task", completed: true, createdAt: now(), updatedAt: now() },
 ];
 
 const canUseStorage =
@@ -43,7 +45,12 @@ function persistState() {
 
 const storedItems = loadFromStorage();
 if (storedItems) {
-  demoItems = storedItems;
+  const timestamped = storedItems.map((item) => {
+    const createdAt = item.createdAt ?? now();
+    const updatedAt = item.updatedAt ?? createdAt;
+    return { ...item, createdAt, updatedAt };
+  });
+  demoItems = timestamped;
 }
 
 // Function to fetch items (simulated async behavior)
@@ -59,6 +66,7 @@ export function toggleItem(id) {
   const item = demoItems.find((entry) => entry.id === id);
   if (item) {
     item.completed = !item.completed;
+    item.updatedAt = now();
     persistState();
     return { item, error: null };
   }
@@ -76,7 +84,14 @@ export function addItem(label) {
     return { item: null, error: "Label must not be blank" };
   }
   const nextId = demoItems.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
-  const newItem = { id: nextId, label: trimmedLabel, completed: false };
+  const timestamp = now();
+  const newItem = {
+    id: nextId,
+    label: trimmedLabel,
+    completed: false,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
   demoItems.push(newItem);
   persistState();
   return { item: newItem, error: null };

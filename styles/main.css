@@ -69,6 +69,30 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.5rem 0 1rem;
+}
+
+.controls select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d7dde5;
+  border-radius: 10px;
+  background: #f9fafb;
+  font-size: 0.95rem;
+  min-width: 140px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.controls select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: #ffffff;
+  outline: none;
+}
+
 form {
   display: grid;
   grid-template-columns: 1fr auto;

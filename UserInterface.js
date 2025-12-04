@@ -21,6 +21,36 @@ function createLayout() {
   status.id = "status";
   status.setAttribute("aria-live", "polite");
 
+  const controls = document.createElement("div");
+  controls.className = "controls";
+
+  const filterSelect = document.createElement("select");
+  filterSelect.id = "filter";
+  [
+    { value: "all", label: "All" },
+    { value: "active", label: "Active" },
+    { value: "completed", label: "Completed" },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    filterSelect.appendChild(option);
+  });
+
+  const sortSelect = document.createElement("select");
+  sortSelect.id = "sort";
+  [
+    { value: "recent", label: "Recent activity" },
+    { value: "oldest", label: "Oldest first" },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    sortSelect.appendChild(option);
+  });
+
+  controls.append(filterSelect, sortSelect);
+
   const counts = document.createElement("div");
   counts.id = "counts";
   counts.setAttribute("aria-live", "polite");
@@ -30,9 +60,9 @@ function createLayout() {
   list.setAttribute("aria-live", "polite");
 
   form.append(input, submit);
-  main.append(form, status, counts, list);
+  main.append(form, status, controls, counts, list);
 
-  return { form, input, status, counts, list };
+  return { form, input, status, controls, filterSelect, sortSelect, counts, list };
 }
 
 function createEmptyState() {
@@ -97,20 +127,51 @@ function setStatus(statusEl, message, type = "info") {
 }
 
 async function initializeUI() {
-  const { form, input, status, counts, list } = createLayout();
+  const { form, input, status, counts, list, filterSelect, sortSelect } = createLayout();
+
+  let cachedItems = [];
+  const viewState = {
+    filter: filterSelect.value,
+    sort: sortSelect.value,
+  };
+
+  const sorters = {
+    recent: (a, b) => {
+      const aTime = a.updatedAt ?? a.createdAt ?? 0;
+      const bTime = b.updatedAt ?? b.createdAt ?? 0;
+      return bTime - aTime || b.id - a.id;
+    },
+    oldest: (a, b) => {
+      const aTime = a.updatedAt ?? a.createdAt ?? 0;
+      const bTime = b.updatedAt ?? b.createdAt ?? 0;
+      return aTime - bTime || a.id - b.id;
+    },
+  };
+
+  const applyView = (items) => {
+    const filtered = items.filter((item) => {
+      if (viewState.filter === "completed") return item.completed;
+      if (viewState.filter === "active") return !item.completed;
+      return true;
+    });
+    const sorter = sorters[viewState.sort] || sorters.recent;
+    return filtered.slice().sort(sorter);
+  };
 
   const render = (items) => {
-    renderItems(list, items, {
+    const viewItems = applyView(items);
+    renderItems(list, viewItems, {
       onToggle: handleToggle,
       onRemove: handleRemove,
     });
-    renderCounts(counts, items);
+    renderCounts(counts, viewItems);
   };
 
   const refresh = async () => {
     setStatus(status, "Loading tasks…");
     try {
       const items = await fetchItems();
+      cachedItems = items;
       render(items);
       setStatus(status, "");
       return items;
@@ -138,6 +199,16 @@ async function initializeUI() {
   const handleRemove = (id) => {
     runItemAction(() => removeItem(id), "Task removed.");
   };
+
+  filterSelect.addEventListener("change", () => {
+    viewState.filter = filterSelect.value;
+    render(cachedItems);
+  });
+
+  sortSelect.addEventListener("change", () => {
+    viewState.sort = sortSelect.value;
+    render(cachedItems);
+  });
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
