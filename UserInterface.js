@@ -75,6 +75,7 @@ function createEmptyState() {
 function createListItem(item, { onToggle, onRemove }) {
   const li = document.createElement("li");
   li.dataset.id = String(item.id);
+  li.tabIndex = 0;
 
   const label = document.createElement("span");
   label.textContent = item.label;
@@ -200,18 +201,7 @@ async function initializeUI() {
     runItemAction(() => removeItem(id), "Task removed.");
   };
 
-  filterSelect.addEventListener("change", () => {
-    viewState.filter = filterSelect.value;
-    render(cachedItems);
-  });
-
-  sortSelect.addEventListener("change", () => {
-    viewState.sort = sortSelect.value;
-    render(cachedItems);
-  });
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
+  const attemptAdd = () => {
     const label = input.value.trim();
     if (!label) {
       input.classList.add("invalid");
@@ -228,6 +218,39 @@ async function initializeUI() {
     }
     input.classList.remove("invalid");
     input.value = "";
+  };
+
+  filterSelect.addEventListener("change", () => {
+    viewState.filter = filterSelect.value;
+    render(cachedItems);
+  });
+
+  sortSelect.addEventListener("change", () => {
+    viewState.sort = sortSelect.value;
+    render(cachedItems);
+  });
+
+  form.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      attemptAdd();
+    }
+  });
+
+  list.addEventListener("keydown", (event) => {
+    const isButton = event.target instanceof HTMLElement && event.target.tagName === "BUTTON";
+    if (isButton) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const li = event.target.closest("li");
+    if (!li || !li.dataset.id) return;
+    event.preventDefault();
+    const id = Number(li.dataset.id);
+    handleToggle(id);
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    attemptAdd();
   });
 
   refresh();

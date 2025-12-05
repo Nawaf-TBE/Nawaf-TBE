@@ -157,6 +157,7 @@ ul#task-list li {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #fdfefe;
+  outline: none;
 }
 
 ul#task-list li .actions {
@@ -172,4 +173,10 @@ ul#task-list li .completed {
 ul#task-list li.empty {
   justify-content: center;
   color: #6b7280;
+}
+
+ul#task-list li:focus-visible,
+ul#task-list li:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
 }
