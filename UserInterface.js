@@ -1,6 +1,34 @@
 // Basic User Interface wired to the data layer
 import { fetchItems, addItem, toggleItem, removeItem } from "./app.js";
 
+const PREFS_KEY = "taskUIPrefs";
+const FILTER_OPTIONS = ["all", "active", "completed"];
+const SORT_OPTIONS = ["recent", "oldest"];
+
+const canUseStorage =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+function loadPrefs() {
+  if (!canUseStorage) return null;
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePrefs(prefs) {
+  if (!canUseStorage) return;
+  try {
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    // ignore storage errors; UI will still function with defaults
+  }
+}
+
 function createLayout() {
   const main = document.querySelector("main");
   const form = document.createElement("form");
@@ -130,6 +158,19 @@ function setStatus(statusEl, message, type = "info") {
 async function initializeUI() {
   const { form, input, status, counts, list, filterSelect, sortSelect } = createLayout();
 
+  const storedPrefs = loadPrefs();
+  const normalize = (value, options, fallback) =>
+    options.includes(value) ? value : fallback;
+  const initialFilter = normalize(
+    storedPrefs?.filter,
+    FILTER_OPTIONS,
+    filterSelect.value
+  );
+  const initialSort = normalize(storedPrefs?.sort, SORT_OPTIONS, sortSelect.value);
+
+  filterSelect.value = initialFilter;
+  sortSelect.value = initialSort;
+
   let cachedItems = [];
   const viewState = {
     filter: filterSelect.value,
@@ -222,11 +263,13 @@ async function initializeUI() {
 
   filterSelect.addEventListener("change", () => {
     viewState.filter = filterSelect.value;
+    savePrefs(viewState);
     render(cachedItems);
   });
 
   sortSelect.addEventListener("change", () => {
     viewState.sort = sortSelect.value;
+    savePrefs(viewState);
     render(cachedItems);
   });
 
