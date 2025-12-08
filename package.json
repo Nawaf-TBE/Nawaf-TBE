@@ -1,0 +1,10 @@
+{
+  "name": "nawaf-tbe-demo",
+  "version": "0.1.0",
+  "description": "UI demo for tasks with basic data helpers and smoke tests",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/smoke.mjs"
+  },
+  "devDependencies": {}
+}
