@@ -95,8 +95,17 @@ function createLayout() {
 
 function createEmptyState() {
   const empty = document.createElement("li");
-  empty.textContent = "No tasks yet. Add one above!";
   empty.className = "empty";
+
+  const visual = document.createElement("img");
+  visual.src = "./assets/empty-state.svg";
+  visual.alt = "No tasks illustration";
+  visual.className = "empty-visual";
+
+  const text = document.createElement("div");
+  text.textContent = "No tasks yet. Add one above!";
+
+  empty.append(visual, text);
   return empty;
 }
 
