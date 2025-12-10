@@ -13,6 +13,16 @@ let demoItems = [
 const canUseStorage =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
+const storageState = {
+  enabled: canUseStorage,
+  error: canUseStorage ? null : "localStorage unavailable",
+};
+
+function markStorageError(err) {
+  storageState.enabled = false;
+  storageState.error = err ? String(err) : "localStorage unavailable";
+}
+
 // Local persistence helpers (no-op if storage is unavailable)
 function loadFromStorage() {
   if (!canUseStorage) return null;
@@ -21,7 +31,8 @@ function loadFromStorage() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : null;
-  } catch {
+  } catch (err) {
+    markStorageError(err);
     return null;
   }
 }
@@ -30,8 +41,9 @@ function saveToStorage(items) {
   if (!canUseStorage) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // ignore storage errors; app will continue in-memory only
+  } catch (err) {
+    // app continues in-memory only
+    markStorageError(err);
   }
 }
 
@@ -112,4 +124,8 @@ export function removeItem(id) {
 // Helper to log current state (useful for debugging)
 export function logState() {
   console.table(demoItems);
+}
+
+export function getStorageStatus() {
+  return { ...storageState };
 }

@@ -1,5 +1,11 @@
 // Basic User Interface wired to the data layer
-import { fetchItems, addItem, toggleItem, removeItem } from "./app.js";
+import {
+  fetchItems,
+  addItem,
+  toggleItem,
+  removeItem,
+  getStorageStatus,
+} from "./app.js";
 
 const PREFS_KEY = "taskUIPrefs";
 const FILTER_OPTIONS = ["all", "active", "completed"];
@@ -49,6 +55,10 @@ function createLayout() {
   status.id = "status";
   status.setAttribute("aria-live", "polite");
 
+  const storageBanner = document.createElement("div");
+  storageBanner.id = "storage-banner";
+  storageBanner.setAttribute("aria-live", "polite");
+
   const controls = document.createElement("div");
   controls.className = "controls";
 
@@ -88,9 +98,19 @@ function createLayout() {
   list.setAttribute("aria-live", "polite");
 
   form.append(input, submit);
-  main.append(form, status, controls, counts, list);
+  main.append(form, status, storageBanner, controls, counts, list);
 
-  return { form, input, status, controls, filterSelect, sortSelect, counts, list };
+  return {
+    form,
+    input,
+    status,
+    storageBanner,
+    controls,
+    filterSelect,
+    sortSelect,
+    counts,
+    list,
+  };
 }
 
 function createEmptyState() {
@@ -164,8 +184,29 @@ function setStatus(statusEl, message, type = "info") {
   statusEl.className = message ? `status ${type}` : "status";
 }
 
+function setStorageBanner(bannerEl) {
+  const state = getStorageStatus();
+  if (!state.enabled) {
+    bannerEl.textContent =
+      "Local storage is unavailable; changes only persist during this session.";
+    bannerEl.classList.add("show");
+  } else {
+    bannerEl.textContent = "";
+    bannerEl.classList.remove("show");
+  }
+}
+
 async function initializeUI() {
-  const { form, input, status, counts, list, filterSelect, sortSelect } = createLayout();
+  const {
+    form,
+    input,
+    status,
+    storageBanner,
+    counts,
+    list,
+    filterSelect,
+    sortSelect,
+  } = createLayout();
 
   const storedPrefs = loadPrefs();
   const normalize = (value, options, fallback) =>
@@ -225,9 +266,11 @@ async function initializeUI() {
       cachedItems = items;
       render(items);
       setStatus(status, "");
+      setStorageBanner(storageBanner);
       return items;
     } catch (err) {
       setStatus(status, err?.message || "Failed to load tasks.", "error");
+      setStorageBanner(storageBanner);
       return [];
     }
   };
@@ -240,6 +283,7 @@ async function initializeUI() {
     }
     setStatus(status, successMessage);
     refresh();
+    setStorageBanner(storageBanner);
     return true;
   };
 
