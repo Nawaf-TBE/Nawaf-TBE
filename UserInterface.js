@@ -46,24 +46,29 @@ function createLayout() {
   input.placeholder = "Add a new task";
   input.required = true;
   input.autocomplete = "off";
+  input.setAttribute("aria-label", "Task name");
 
   const submit = document.createElement("button");
   submit.type = "submit";
   submit.textContent = "Add Task";
+  submit.setAttribute("aria-label", "Add task");
 
   const status = document.createElement("div");
   status.id = "status";
   status.setAttribute("aria-live", "polite");
+  status.setAttribute("role", "status");
 
   const storageBanner = document.createElement("div");
   storageBanner.id = "storage-banner";
   storageBanner.setAttribute("aria-live", "polite");
+  storageBanner.setAttribute("role", "status");
 
   const controls = document.createElement("div");
   controls.className = "controls";
 
   const filterSelect = document.createElement("select");
   filterSelect.id = "filter";
+  filterSelect.setAttribute("aria-label", "Filter tasks");
   [
     { value: "all", label: "All" },
     { value: "active", label: "Active" },
@@ -77,6 +82,7 @@ function createLayout() {
 
   const sortSelect = document.createElement("select");
   sortSelect.id = "sort";
+  sortSelect.setAttribute("aria-label", "Sort tasks");
   [
     { value: "recent", label: "Recent activity" },
     { value: "oldest", label: "Oldest first" },
@@ -133,6 +139,8 @@ function createListItem(item, { onToggle, onRemove }) {
   const li = document.createElement("li");
   li.dataset.id = String(item.id);
   li.tabIndex = 0;
+  li.setAttribute("role", "listitem");
+  li.setAttribute("aria-label", `${item.label}, ${item.completed ? "completed" : "active"}`);
 
   const label = document.createElement("span");
   label.textContent = item.label;
@@ -141,11 +149,16 @@ function createListItem(item, { onToggle, onRemove }) {
   const toggleBtn = document.createElement("button");
   toggleBtn.type = "button";
   toggleBtn.textContent = item.completed ? "Mark Incomplete" : "Mark Done";
+  toggleBtn.setAttribute(
+    "aria-label",
+    `${item.completed ? "Mark incomplete" : "Mark complete"}: ${item.label}`
+  );
   toggleBtn.addEventListener("click", () => onToggle(item.id));
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
   removeBtn.textContent = "Remove";
+  removeBtn.setAttribute("aria-label", `Remove task: ${item.label}`);
   removeBtn.addEventListener("click", () => onRemove(item.id));
 
   const actions = document.createElement("div");
