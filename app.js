@@ -3,6 +3,8 @@
 const STORAGE_KEY = "demoItems";
 
 const now = () => Date.now();
+const MIN_LABEL_LENGTH = 3;
+const MAX_LABEL_LENGTH = 100;
 
 // Mock data that UI could render (in-memory state)
 let demoItems = [
@@ -94,6 +96,24 @@ export function addItem(label) {
   const trimmedLabel = label.trim();
   if (!trimmedLabel) {
     return { item: null, error: "Label must not be blank" };
+  }
+  if (trimmedLabel.length < MIN_LABEL_LENGTH) {
+    return {
+      item: null,
+      error: `Label must be at least ${MIN_LABEL_LENGTH} characters`,
+    };
+  }
+  if (trimmedLabel.length > MAX_LABEL_LENGTH) {
+    return {
+      item: null,
+      error: `Label must be under ${MAX_LABEL_LENGTH} characters`,
+    };
+  }
+  const duplicate = demoItems.some(
+    (entry) => entry.label.trim().toLowerCase() === trimmedLabel.toLowerCase()
+  );
+  if (duplicate) {
+    return { item: null, error: "A task with this name already exists" };
   }
   const nextId = demoItems.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
   const timestamp = now();

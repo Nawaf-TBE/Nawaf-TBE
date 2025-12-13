@@ -47,6 +47,17 @@ async function runDataTests() {
     afterRemove.length === initialLength,
     "removeItem should restore list length"
   );
+
+  // Validation: short label should fail
+  const { error: shortError } = addItem("a");
+  assert(shortError, "Short labels should be rejected");
+
+  // Validation: duplicate label should fail
+  const { item: uniqueItem, error: uniqueError } = addItem("Unique Task");
+  assert(!uniqueError, `addItem error: ${uniqueError}`);
+  const { error: dupError } = addItem("Unique Task");
+  assert(dupError, "Duplicate task names should be rejected");
+  removeItem(uniqueItem.id);
 }
 
 // Minimal DOM stubs for UI tests
