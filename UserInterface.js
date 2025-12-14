@@ -10,6 +10,8 @@ import {
 const PREFS_KEY = "taskUIPrefs";
 const FILTER_OPTIONS = ["all", "active", "completed"];
 const SORT_OPTIONS = ["recent", "oldest"];
+const MIN_LABEL_LENGTH = 3;
+const MAX_LABEL_LENGTH = 100;
 
 const canUseStorage =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -313,6 +315,35 @@ async function initializeUI() {
     if (!label) {
       input.classList.add("invalid");
       setStatus(status, "Please enter a task name.", "error");
+      input.focus();
+      return;
+    }
+    if (label.length < MIN_LABEL_LENGTH) {
+      input.classList.add("invalid");
+      setStatus(
+        status,
+        `Task name must be at least ${MIN_LABEL_LENGTH} characters.`,
+        "error"
+      );
+      input.focus();
+      return;
+    }
+    if (label.length > MAX_LABEL_LENGTH) {
+      input.classList.add("invalid");
+      setStatus(
+        status,
+        `Task name must be under ${MAX_LABEL_LENGTH} characters.`,
+        "error"
+      );
+      input.focus();
+      return;
+    }
+    const duplicate = cachedItems.some(
+      (item) => item.label.trim().toLowerCase() === label.toLowerCase()
+    );
+    if (duplicate) {
+      input.classList.add("invalid");
+      setStatus(status, "A task with this name already exists.", "error");
       input.focus();
       return;
     }
