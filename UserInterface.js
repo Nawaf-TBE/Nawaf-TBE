@@ -237,6 +237,7 @@ async function initializeUI() {
   sortSelect.value = initialSort;
 
   let cachedItems = [];
+  let refreshScheduled = null;
   const viewState = {
     filter: filterSelect.value,
     sort: sortSelect.value,
@@ -297,7 +298,7 @@ async function initializeUI() {
       return false;
     }
     setStatus(status, successMessage);
-    refresh();
+    scheduleRefresh();
     setStorageBanner(storageBanner);
     return true;
   };
@@ -392,6 +393,14 @@ async function initializeUI() {
     event.preventDefault();
     attemptAdd();
   });
+
+  const scheduleRefresh = () => {
+    if (refreshScheduled) return;
+    refreshScheduled = setTimeout(async () => {
+      refreshScheduled = null;
+      await refresh();
+    }, 50);
+  };
 
   refresh();
 }
