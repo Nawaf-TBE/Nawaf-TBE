@@ -4,7 +4,8 @@
   "description": "UI demo for tasks with basic data helpers and smoke tests",
   "type": "module",
   "scripts": {
-    "test": "node tests/smoke.mjs"
+    "test": "node tests/smoke.mjs",
+    "dev": "python -m http.server 8000"
   },
   "devDependencies": {}
 }
