@@ -96,7 +96,11 @@ button:focus-visible {
 form {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.75rem;
+  grid-template-areas:
+    "input button"
+    "helper helper"
+    "counter counter";
+  gap: 0.5rem 0.75rem;
   margin-bottom: 1rem;
 }
 
@@ -120,6 +124,18 @@ input.invalid {
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
   background: #fff6f6;
+}
+
+#input-helper {
+  grid-area: helper;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+#char-counter {
+  grid-area: counter;
+  font-size: 0.9rem;
+  color: #4a5568;
 }
 
 #status {

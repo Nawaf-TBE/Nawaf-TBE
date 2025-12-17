@@ -50,6 +50,14 @@ function createLayout() {
   input.autocomplete = "off";
   input.setAttribute("aria-label", "Task name");
 
+  const helper = document.createElement("div");
+  helper.id = "input-helper";
+  helper.textContent = "3-100 chars, no duplicate names.";
+
+  const counter = document.createElement("div");
+  counter.id = "char-counter";
+  counter.textContent = "0 / 100";
+
   const submit = document.createElement("button");
   submit.type = "submit";
   submit.textContent = "Add Task";
@@ -105,12 +113,14 @@ function createLayout() {
   list.id = "task-list";
   list.setAttribute("aria-live", "polite");
 
-  form.append(input, submit);
+  form.append(input, helper, counter, submit);
   main.append(form, status, storageBanner, controls, counts, list);
 
   return {
     form,
     input,
+    helper,
+    counter,
     status,
     storageBanner,
     controls,
@@ -215,6 +225,8 @@ async function initializeUI() {
   const {
     form,
     input,
+    helper,
+    counter,
     status,
     storageBanner,
     counts,
@@ -313,6 +325,7 @@ async function initializeUI() {
 
   const attemptAdd = () => {
     const label = input.value.trim();
+    counter.textContent = `${Math.min(label.length, MAX_LABEL_LENGTH)} / ${MAX_LABEL_LENGTH}`;
     if (!label) {
       input.classList.add("invalid");
       setStatus(status, "Please enter a task name.", "error");
@@ -357,6 +370,7 @@ async function initializeUI() {
     }
     input.classList.remove("invalid");
     input.value = "";
+    counter.textContent = `0 / ${MAX_LABEL_LENGTH}`;
   };
 
   filterSelect.addEventListener("change", () => {
@@ -392,6 +406,13 @@ async function initializeUI() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     attemptAdd();
+  });
+
+  input.addEventListener("input", () => {
+    const length = Math.min(input.value.length, MAX_LABEL_LENGTH);
+    counter.textContent = `${length} / ${MAX_LABEL_LENGTH}`;
+    input.classList.remove("invalid");
+    setStatus(status, "", "info");
   });
 
   const scheduleRefresh = () => {
