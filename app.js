@@ -1,6 +1,7 @@
 // Basic application logic for User Interface demo
 
 const STORAGE_KEY = "demoItems";
+const API_STORAGE_KEY = "demoItemsApi";
 
 const now = () => Date.now();
 const MIN_LABEL_LENGTH = 3;
@@ -20,9 +21,19 @@ const storageState = {
   error: canUseStorage ? null : "localStorage unavailable",
 };
 
+const apiState = {
+  enabled: true,
+  error: null,
+};
+
 function markStorageError(err) {
   storageState.enabled = false;
   storageState.error = err ? String(err) : "localStorage unavailable";
+}
+
+function markApiError(err) {
+  apiState.enabled = false;
+  apiState.error = err ? String(err) : "API unavailable";
 }
 
 // Local persistence helpers (no-op if storage is unavailable)
@@ -53,8 +64,38 @@ function cloneItems(items = demoItems) {
   return items.map((item) => ({ ...item }));
 }
 
+async function loadFromMockApi() {
+  try {
+    // Simulate network latency
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    if (!canUseStorage) {
+      throw new Error("localStorage unavailable");
+    }
+    const raw = window.localStorage.getItem(API_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (err) {
+    markApiError(err);
+    return null;
+  }
+}
+
+async function saveToMockApi(items) {
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    if (!canUseStorage) {
+      throw new Error("localStorage unavailable");
+    }
+    window.localStorage.setItem(API_STORAGE_KEY, JSON.stringify(items));
+  } catch (err) {
+    markApiError(err);
+  }
+}
+
 function persistState() {
   saveToStorage(demoItems);
+  saveToMockApi(demoItems);
 }
 
 const storedItems = loadFromStorage();
@@ -70,6 +111,12 @@ if (storedItems) {
 // Function to fetch items (simulated async behavior)
 export async function fetchItems() {
   // simulate network delay
+  if (!apiState.error) {
+    const apiItems = await loadFromMockApi();
+    if (apiItems) {
+      demoItems = apiItems;
+    }
+  }
   return new Promise((resolve) => {
     setTimeout(() => resolve(cloneItems()), 300);
   });
@@ -148,4 +195,8 @@ export function logState() {
 
 export function getStorageStatus() {
   return { ...storageState };
+}
+
+export function getApiStatus() {
+  return { ...apiState };
 }
