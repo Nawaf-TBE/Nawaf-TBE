@@ -76,6 +76,12 @@ function createLayout() {
   const controls = document.createElement("div");
   controls.className = "controls";
 
+  const searchInput = document.createElement("input");
+  searchInput.type = "search";
+  searchInput.id = "search";
+  searchInput.placeholder = "Search tasks";
+  searchInput.setAttribute("aria-label", "Search tasks");
+
   const filterSelect = document.createElement("select");
   filterSelect.id = "filter";
   filterSelect.setAttribute("aria-label", "Filter tasks");
@@ -103,7 +109,13 @@ function createLayout() {
     sortSelect.appendChild(option);
   });
 
-  controls.append(filterSelect, sortSelect);
+  const clearFilters = document.createElement("button");
+  clearFilters.type = "button";
+  clearFilters.id = "clear-filters";
+  clearFilters.textContent = "Clear Filters";
+  clearFilters.setAttribute("aria-label", "Clear filters");
+
+  controls.append(searchInput, filterSelect, sortSelect, clearFilters);
 
   const counts = document.createElement("div");
   counts.id = "counts";
@@ -124,8 +136,10 @@ function createLayout() {
     status,
     storageBanner,
     controls,
+    searchInput,
     filterSelect,
     sortSelect,
+    clearFilters,
     counts,
     list,
   };
@@ -231,8 +245,10 @@ async function initializeUI() {
     storageBanner,
     counts,
     list,
+    searchInput,
     filterSelect,
     sortSelect,
+    clearFilters,
   } = createLayout();
 
   const storedPrefs = loadPrefs();
@@ -251,6 +267,7 @@ async function initializeUI() {
   let cachedItems = [];
   let refreshScheduled = null;
   const viewState = {
+    query: "",
     filter: filterSelect.value,
     sort: sortSelect.value,
   };
@@ -269,7 +286,11 @@ async function initializeUI() {
   };
 
   const applyView = (items) => {
+    const query = viewState.query.trim().toLowerCase();
     const filtered = items.filter((item) => {
+      if (query && !item.label.toLowerCase().includes(query)) {
+        return false;
+      }
       if (viewState.filter === "completed") return item.completed;
       if (viewState.filter === "active") return !item.completed;
       return true;
@@ -381,6 +402,20 @@ async function initializeUI() {
 
   sortSelect.addEventListener("change", () => {
     viewState.sort = sortSelect.value;
+    savePrefs(viewState);
+    render(cachedItems);
+  });
+
+  searchInput.addEventListener("input", () => {
+    viewState.query = searchInput.value;
+    render(cachedItems);
+  });
+
+  clearFilters.addEventListener("click", () => {
+    viewState.query = "";
+    viewState.filter = "all";
+    searchInput.value = "";
+    filterSelect.value = "all";
     savePrefs(viewState);
     render(cachedItems);
   });
