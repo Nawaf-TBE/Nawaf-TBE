@@ -53,6 +53,10 @@ button {
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease, border-color 120ms ease;
 }
 
+form button[type="submit"] {
+  grid-area: button;
+}
+
 button:hover {
   transform: translateY(-1px);
   border-color: #cbd5e0;
@@ -114,11 +118,11 @@ button:focus-visible {
 
 form {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 160px auto;
   grid-template-areas:
-    "input button"
-    "helper helper"
-    "counter counter";
+    "input date button"
+    "helper helper helper"
+    "counter counter counter";
   gap: 0.5rem 0.75rem;
   margin-bottom: 1rem;
 }
@@ -130,6 +134,10 @@ input[type="text"] {
   font-size: 1rem;
   background: #f9fafb;
   transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+input[type="text"] {
+  grid-area: input;
 }
 
 input[type="text"]:focus {
@@ -145,6 +153,21 @@ input.invalid {
   background: #fff6f6;
 }
 
+input[type="date"] {
+  grid-area: date;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d7dde5;
+  border-radius: 10px;
+  background: #f9fafb;
+  font-size: 0.95rem;
+}
+
+input[type="date"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: #ffffff;
+  outline: none;
+}
 #input-helper {
   grid-area: helper;
   font-size: 0.9rem;
@@ -216,6 +239,11 @@ ul#task-list li .actions {
   gap: 0.5rem;
 }
 
+ul#task-list li .due-date {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
 ul#task-list li .completed {
   text-decoration: line-through;
   color: #9ca3af;
@@ -232,6 +260,11 @@ ul#task-list li:focus-visible,
 ul#task-list li:focus-within {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.due-soon {
+  border-color: #f59e0b;
+  background: #fffbeb;
 }
 
 .empty-visual {

@@ -9,9 +9,10 @@ import {
 
 const PREFS_KEY = "taskUIPrefs";
 const FILTER_OPTIONS = ["all", "active", "completed"];
-const SORT_OPTIONS = ["recent", "oldest"];
+const SORT_OPTIONS = ["recent", "oldest", "due"];
 const MIN_LABEL_LENGTH = 3;
 const MAX_LABEL_LENGTH = 100;
+const DUE_SOON_DAYS = 3;
 
 const canUseStorage =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -50,9 +51,14 @@ function createLayout() {
   input.autocomplete = "off";
   input.setAttribute("aria-label", "Task name");
 
+  const dueDateInput = document.createElement("input");
+  dueDateInput.type = "date";
+  dueDateInput.id = "due-date";
+  dueDateInput.setAttribute("aria-label", "Due date");
+
   const helper = document.createElement("div");
   helper.id = "input-helper";
-  helper.textContent = "3-100 chars, no duplicate names.";
+  helper.textContent = "3-100 chars, no duplicate names. Optional due date.";
 
   const counter = document.createElement("div");
   counter.id = "char-counter";
@@ -102,6 +108,7 @@ function createLayout() {
   [
     { value: "recent", label: "Recent activity" },
     { value: "oldest", label: "Oldest first" },
+    { value: "due", label: "Due date" },
   ].forEach(({ value, label }) => {
     const option = document.createElement("option");
     option.value = value;
@@ -125,12 +132,13 @@ function createLayout() {
   list.id = "task-list";
   list.setAttribute("aria-live", "polite");
 
-  form.append(input, helper, counter, submit);
+  form.append(input, dueDateInput, helper, counter, submit);
   main.append(form, status, storageBanner, controls, counts, list);
 
   return {
     form,
     input,
+    dueDateInput,
     helper,
     counter,
     status,
@@ -161,16 +169,42 @@ function createEmptyState() {
   return empty;
 }
 
+function isDueSoon(dueDate) {
+  if (!dueDate) return false;
+  const due = new Date(`${dueDate}T00:00:00`);
+  if (Number.isNaN(due.getTime())) return false;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffMs = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return diffDays >= 0 && diffDays <= DUE_SOON_DAYS;
+}
+
 function createListItem(item, { onToggle, onRemove }) {
   const li = document.createElement("li");
   li.dataset.id = String(item.id);
   li.tabIndex = 0;
   li.setAttribute("role", "listitem");
-  li.setAttribute("aria-label", `${item.label}, ${item.completed ? "completed" : "active"}`);
+  if (isDueSoon(item.dueDate) && !item.completed) {
+    li.classList.add("due-soon");
+  }
+  const dueText = item.dueDate ? `, due ${item.dueDate}` : "";
+  li.setAttribute(
+    "aria-label",
+    `${item.label}, ${item.completed ? "completed" : "active"}${dueText}`
+  );
 
   const label = document.createElement("span");
   label.textContent = item.label;
   label.className = item.completed ? "completed" : "";
+
+  const due = document.createElement("span");
+  due.className = "due-date";
+  if (item.dueDate) {
+    due.textContent = `Due: ${item.dueDate}`;
+  } else {
+    due.textContent = "No due date";
+  }
 
   const toggleBtn = document.createElement("button");
   toggleBtn.type = "button";
@@ -191,7 +225,7 @@ function createListItem(item, { onToggle, onRemove }) {
   actions.className = "actions";
   actions.append(toggleBtn, removeBtn);
 
-  li.append(label, actions);
+  li.append(label, due, actions);
   return li;
 }
 
@@ -239,6 +273,7 @@ async function initializeUI() {
   const {
     form,
     input,
+    dueDateInput,
     helper,
     counter,
     status,
@@ -282,6 +317,11 @@ async function initializeUI() {
       const aTime = a.updatedAt ?? a.createdAt ?? 0;
       const bTime = b.updatedAt ?? b.createdAt ?? 0;
       return aTime - bTime || a.id - b.id;
+    },
+    due: (a, b) => {
+      const aDue = a.dueDate ? new Date(`${a.dueDate}T00:00:00`).getTime() : Infinity;
+      const bDue = b.dueDate ? new Date(`${b.dueDate}T00:00:00`).getTime() : Infinity;
+      return aDue - bDue || a.id - b.id;
     },
   };
 
@@ -347,6 +387,7 @@ async function initializeUI() {
   const attemptAdd = () => {
     const label = input.value.trim();
     counter.textContent = `${Math.min(label.length, MAX_LABEL_LENGTH)} / ${MAX_LABEL_LENGTH}`;
+    const dueDate = dueDateInput.value ? dueDateInput.value : null;
     if (!label) {
       input.classList.add("invalid");
       setStatus(status, "Please enter a task name.", "error");
@@ -384,13 +425,14 @@ async function initializeUI() {
     }
     input.classList.remove("invalid");
 
-    const added = runItemAction(() => addItem(label), "Task added.");
+    const added = runItemAction(() => addItem(label, dueDate), "Task added.");
     if (!added) {
       input.classList.add("invalid");
       return;
     }
     input.classList.remove("invalid");
     input.value = "";
+    dueDateInput.value = "";
     counter.textContent = `0 / ${MAX_LABEL_LENGTH}`;
   };
 

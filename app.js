@@ -9,8 +9,22 @@ const MAX_LABEL_LENGTH = 100;
 
 // Mock data that UI could render (in-memory state)
 let demoItems = [
-  { id: 1, label: "First task", completed: false, createdAt: now(), updatedAt: now() },
-  { id: 2, label: "Second task", completed: true, createdAt: now(), updatedAt: now() },
+  {
+    id: 1,
+    label: "First task",
+    completed: false,
+    createdAt: now(),
+    updatedAt: now(),
+    dueDate: null,
+  },
+  {
+    id: 2,
+    label: "Second task",
+    completed: true,
+    createdAt: now(),
+    updatedAt: now(),
+    dueDate: null,
+  },
 ];
 
 const canUseStorage =
@@ -103,7 +117,8 @@ if (storedItems) {
   const timestamped = storedItems.map((item) => {
     const createdAt = item.createdAt ?? now();
     const updatedAt = item.updatedAt ?? createdAt;
-    return { ...item, createdAt, updatedAt };
+    const dueDate = item.dueDate ?? null;
+    return { ...item, createdAt, updatedAt, dueDate };
   });
   demoItems = timestamped;
 }
@@ -136,7 +151,7 @@ export function toggleItem(id) {
 }
 
 // Add a new item to the list
-export function addItem(label) {
+export function addItem(label, dueDate = null) {
   if (!label || typeof label !== "string") {
     return { item: null, error: "Label must be a non-empty string" };
   }
@@ -164,12 +179,14 @@ export function addItem(label) {
   }
   const nextId = demoItems.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
   const timestamp = now();
+  const normalizedDueDate = dueDate ? String(dueDate) : null;
   const newItem = {
     id: nextId,
     label: trimmedLabel,
     completed: false,
     createdAt: timestamp,
     updatedAt: timestamp,
+    dueDate: normalizedDueDate,
   };
   demoItems.push(newItem);
   persistState();
