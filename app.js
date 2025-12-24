@@ -205,6 +205,32 @@ export function removeItem(id) {
   return { removed: true, error: null };
 }
 
+// Mark all items as completed
+export function markAllComplete() {
+  if (!demoItems.length) {
+    return { updated: 0, error: null };
+  }
+  demoItems.forEach((item) => {
+    if (!item.completed) {
+      item.completed = true;
+      item.updatedAt = now();
+    }
+  });
+  persistState();
+  return { updated: demoItems.length, error: null };
+}
+
+// Remove all completed items
+export function clearCompleted() {
+  const before = demoItems.length;
+  demoItems = demoItems.filter((item) => !item.completed);
+  const removed = before - demoItems.length;
+  if (removed) {
+    persistState();
+  }
+  return { removed, error: null };
+}
+
 // Helper to log current state (useful for debugging)
 export function logState() {
   console.table(demoItems);

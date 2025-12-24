@@ -91,6 +91,11 @@ button:focus-visible {
   transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
 }
 
+.controls button {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+}
+
 .controls input[type="search"] {
   padding: 0.55rem 0.75rem;
   border: 1px solid #d7dde5;

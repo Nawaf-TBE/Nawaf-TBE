@@ -4,6 +4,8 @@ import {
   addItem,
   toggleItem,
   removeItem,
+  markAllComplete,
+  clearCompleted,
   getStorageStatus,
 } from "./app.js";
 
@@ -116,13 +118,32 @@ function createLayout() {
     sortSelect.appendChild(option);
   });
 
+  const markAllButton = document.createElement("button");
+  markAllButton.type = "button";
+  markAllButton.id = "mark-all";
+  markAllButton.textContent = "Mark All Complete";
+  markAllButton.setAttribute("aria-label", "Mark all tasks complete");
+
+  const clearCompletedButton = document.createElement("button");
+  clearCompletedButton.type = "button";
+  clearCompletedButton.id = "clear-completed";
+  clearCompletedButton.textContent = "Clear Completed";
+  clearCompletedButton.setAttribute("aria-label", "Clear completed tasks");
+
   const clearFilters = document.createElement("button");
   clearFilters.type = "button";
   clearFilters.id = "clear-filters";
   clearFilters.textContent = "Clear Filters";
   clearFilters.setAttribute("aria-label", "Clear filters");
 
-  controls.append(searchInput, filterSelect, sortSelect, clearFilters);
+  controls.append(
+    searchInput,
+    filterSelect,
+    sortSelect,
+    markAllButton,
+    clearCompletedButton,
+    clearFilters
+  );
 
   const counts = document.createElement("div");
   counts.id = "counts";
@@ -147,6 +168,8 @@ function createLayout() {
     searchInput,
     filterSelect,
     sortSelect,
+    markAllButton,
+    clearCompletedButton,
     clearFilters,
     counts,
     list,
@@ -283,6 +306,8 @@ async function initializeUI() {
     searchInput,
     filterSelect,
     sortSelect,
+    markAllButton,
+    clearCompletedButton,
     clearFilters,
   } = createLayout();
 
@@ -460,6 +485,20 @@ async function initializeUI() {
     filterSelect.value = "all";
     savePrefs(viewState);
     render(cachedItems);
+  });
+
+  markAllButton.addEventListener("click", () => {
+    runItemAction(() => markAllComplete(), "All tasks marked complete.");
+  });
+
+  clearCompletedButton.addEventListener("click", () => {
+    const { removed, error } = clearCompleted();
+    if (error) {
+      setStatus(status, error, "error");
+      return;
+    }
+    setStatus(status, removed ? "Completed tasks cleared." : "No completed tasks.");
+    scheduleRefresh();
   });
 
   form.addEventListener("keydown", (event) => {
