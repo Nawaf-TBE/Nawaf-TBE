@@ -6,6 +6,7 @@ import {
   removeItem,
   markAllComplete,
   clearCompleted,
+  importItems,
   getStorageStatus,
 } from "./app.js";
 
@@ -136,12 +137,32 @@ function createLayout() {
   clearFilters.textContent = "Clear Filters";
   clearFilters.setAttribute("aria-label", "Clear filters");
 
+  const exportButton = document.createElement("button");
+  exportButton.type = "button";
+  exportButton.id = "export-tasks";
+  exportButton.textContent = "Export JSON";
+  exportButton.setAttribute("aria-label", "Export tasks as JSON");
+
+  const importLabel = document.createElement("label");
+  importLabel.className = "import-label";
+  importLabel.textContent = "Import JSON";
+
+  const importInput = document.createElement("input");
+  importInput.type = "file";
+  importInput.id = "import-tasks";
+  importInput.accept = "application/json";
+  importInput.setAttribute("aria-label", "Import tasks from JSON");
+
+  importLabel.append(importInput);
+
   controls.append(
     searchInput,
     filterSelect,
     sortSelect,
     markAllButton,
     clearCompletedButton,
+    exportButton,
+    importLabel,
     clearFilters
   );
 
@@ -170,6 +191,8 @@ function createLayout() {
     sortSelect,
     markAllButton,
     clearCompletedButton,
+    exportButton,
+    importInput,
     clearFilters,
     counts,
     list,
@@ -308,6 +331,8 @@ async function initializeUI() {
     sortSelect,
     markAllButton,
     clearCompletedButton,
+    exportButton,
+    importInput,
     clearFilters,
   } = createLayout();
 
@@ -499,6 +524,41 @@ async function initializeUI() {
     }
     setStatus(status, removed ? "Completed tasks cleared." : "No completed tasks.");
     scheduleRefresh();
+  });
+
+  exportButton.addEventListener("click", async () => {
+    const items = await fetchItems();
+    const payload = JSON.stringify(items, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "tasks.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setStatus(status, "Tasks exported.");
+  });
+
+  importInput.addEventListener("change", async () => {
+    const file = importInput.files && importInput.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const { imported, error } = importItems(parsed);
+      if (error) {
+        setStatus(status, error, "error");
+      } else {
+        setStatus(status, `Imported ${imported} tasks.`);
+        scheduleRefresh();
+      }
+    } catch (err) {
+      setStatus(status, err?.message || "Failed to import tasks.", "error");
+    } finally {
+      importInput.value = "";
+    }
   });
 
   form.addEventListener("keydown", (event) => {

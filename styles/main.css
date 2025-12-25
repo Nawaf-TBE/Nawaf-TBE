@@ -96,6 +96,23 @@ button:focus-visible {
   font-size: 0.9rem;
 }
 
+.import-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(31, 47, 70, 0.08);
+}
+
+.import-label input[type="file"] {
+  display: none;
+}
+
 .controls input[type="search"] {
   padding: 0.55rem 0.75rem;
   border: 1px solid #d7dde5;

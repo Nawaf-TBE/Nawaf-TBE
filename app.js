@@ -231,6 +231,42 @@ export function clearCompleted() {
   return { removed, error: null };
 }
 
+function normalizeImportedItems(items) {
+  const sanitized = [];
+  items.forEach((item, index) => {
+    if (!item || typeof item !== "object") return;
+    const label = typeof item.label === "string" ? item.label.trim() : "";
+    if (!label) return;
+    const id = Number.isFinite(item.id) ? item.id : index + 1;
+    const completed = Boolean(item.completed);
+    const createdAt = Number.isFinite(item.createdAt) ? item.createdAt : now();
+    const updatedAt = Number.isFinite(item.updatedAt) ? item.updatedAt : createdAt;
+    const dueDate = item.dueDate ? String(item.dueDate) : null;
+    sanitized.push({
+      id,
+      label,
+      completed,
+      createdAt,
+      updatedAt,
+      dueDate,
+    });
+  });
+  return sanitized;
+}
+
+export function importItems(items) {
+  if (!Array.isArray(items)) {
+    return { imported: 0, error: "Invalid import format" };
+  }
+  const sanitized = normalizeImportedItems(items);
+  if (!sanitized.length) {
+    return { imported: 0, error: "No valid tasks found in import" };
+  }
+  demoItems = sanitized;
+  persistState();
+  return { imported: sanitized.length, error: null };
+}
+
 // Helper to log current state (useful for debugging)
 export function logState() {
   console.table(demoItems);
