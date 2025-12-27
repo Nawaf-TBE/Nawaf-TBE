@@ -198,11 +198,11 @@ export function removeItem(id) {
   const index = demoItems.findIndex((entry) => entry.id === id);
   if (index === -1) {
     console.warn(`removeItem: no item found for id ${id}`);
-    return { removed: false, error: `No item found for id ${id}` };
+    return { removed: false, item: null, error: `No item found for id ${id}` };
   }
-  demoItems.splice(index, 1);
+  const [removedItem] = demoItems.splice(index, 1);
   persistState();
-  return { removed: true, error: null };
+  return { removed: true, item: removedItem, error: null };
 }
 
 // Mark all items as completed
@@ -222,13 +222,29 @@ export function markAllComplete() {
 
 // Remove all completed items
 export function clearCompleted() {
-  const before = demoItems.length;
+  const removedItems = demoItems.filter((item) => item.completed);
   demoItems = demoItems.filter((item) => !item.completed);
-  const removed = before - demoItems.length;
+  const removed = removedItems.length;
   if (removed) {
     persistState();
   }
-  return { removed, error: null };
+  return { removed, items: removedItems, error: null };
+}
+
+export function restoreItems(items) {
+  if (!Array.isArray(items) || !items.length) {
+    return { restored: 0, error: "No items to restore" };
+  }
+  const existingIds = new Set(demoItems.map((item) => item.id));
+  const normalized = normalizeImportedItems(items).filter(
+    (item) => !existingIds.has(item.id)
+  );
+  if (!normalized.length) {
+    return { restored: 0, error: "No new items to restore" };
+  }
+  demoItems = [...demoItems, ...normalized];
+  persistState();
+  return { restored: normalized.length, error: null };
 }
 
 function normalizeImportedItems(items) {
